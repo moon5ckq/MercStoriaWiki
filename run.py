@@ -4,11 +4,10 @@ from app.foundation import db
 from app.models import Friend
 import json
 
-app_.debug = True
-
+app_.debug = False
 
 manager = Manager(app_)
-manager.add_command("runserver", Server('0.0.0.0',port=8000, threaded=True))
+manager.add_command("runserver", Server('0.0.0.0',port=8001, threaded=True))
 
 @manager.option(dest='raw_data_path', default=None)
 def createall(raw_data_path = None):
