@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>梅露可物语丨Merc Storia Wiki</h1>
+
+<hr />
+<div id="filter">
+    {% for k,v in fltr.iteritems() %}
+    <div class="row">
+        <div class="col-sm-1">
+            <b> {{ cols[k] }} </b>
+        </div>
+        <div class="col-sm-11">
+            <button class="filter btn btn-default all btn-primary" data-type="{{k}}" data-all="1"> All </button>
+            {% for name in v %}
+            <button class="filter btn btn-default normal" data-type="{{k}}" data-name="{{name}}"> {{ name if k != "rarity" else "★"*name }} </button>
+            {% endfor %}
+        </div>
+    </div>
+    <hr />
+    {% endfor %}
+</div>
+
+<div class="row">
+    <table id="result" class="display" width="100%" style="width: 100%" role="grid" cellspacing="0">
+
+    </table>
+
+</div>
+<style>
+td {
+    line-height: 50px !important;
+}
+</style>
+<link href="/static/css/jquery.dataTables.min.css" rel="stylesheet">
+<script src="/static/js/jquery.dataTables.min.js"></script>
+<script src="/static/js/merc_calc.js"></script>
+<script>
+$(function() {
+    $('#filter').on('click', '.all', function() {
+        var me = $(this);
+        var type = this.dataset.type;
+        $('#filter .normal[data-type="' + type + '"]').removeClass('btn-primary');
+        me.addClass('btn-primary');
+        update_filter();
+    });
+    $("#filter").on('click', '.normal', function() {
+        var me = $(this);
+        var type = this.dataset.type;
+        me.toggleClass('btn-primary');
+
+        if (me.hasClass('btn-primary')) {
+            $('#filter .all[data-type="' + type + '"]').removeClass('btn-primary');
+        }
+        else {
+            if ($('#filter .normal.btn-primary[data-type="' + type + '"]').length === 0) {
+                $('#filter .all[data-type="' + type + '"]').addClass('btn-primary');
+            }
+        }
+        update_filter();
+    });
+
+    function update_filter() {
+        var filter = {};
+        var selected = $('#filter .normal.btn-primary');
+
+        for (var i = 0; i < selected.length; i += 1) {
+            var d = selected[i].dataset;
+            var old = filter[d.type] || [];
+            old.push(d.name);
+            filter[d.type] = old;
+        }
+        query(filter);
+    }
+
+
+    function query(filter) {
+        $.post("{{url_for("query")}}", JSON.stringify(filter), function(ret) {
+            render(ret.result);
+        },'json');
+    };
+    if (! navigator.userAgent.match(/mobile/i)) {
+        table = $('#result').dataTable({
+            "data": [],
+            "autoWidth": false,
+            "columns": [
+                {"title": "#" },
+                {"title": "图标", "orderable":false},
+                {"title": "名字", "orderable":false},
+                {"title": "属性"},
+                {"title": "稀有度"},
+                {"title": "满级HP"},
+                {"title": "满级单体DPS"},
+                {"title": "满级综合DPS"},
+                {"title": "攻击距离"},
+            ],
+            "language": {
+                "url": "/static/Chinese.json"
+            }
+        });
+    } else {
+        table = $('#result').dataTable({
+            "data": [],
+            "autoWidth": false,
+            "columns": [
+                {"title": "#" },
+                {"title": "图标", "orderable":false},
+                {"title": "名字", "orderable":false},
+                {"title": "稀有度"},
+            ],
+            "language": {
+                "url": "/static/Chinese.json"
+            }
+        });
+
+    }
+
+    function render(list) {
+        var t = table.DataTable();
+        t.row('*').remove();
+        for (var i =0; i < list.length; i += 1) {
+            var l = list[i];
+            var dps = get_grow(l.atk, l.dev_type, max_lv(l.rarity), l.rarity) / l.cd;
+            if (!navigator.userAgent.match(/mobile/i)) {
+                t.row.add([l.id,
+                    '<a href="/friend/' + l.id +'"><img src="/static/img/square/unit_square_'
+                        +l.id+'.png" height="50" width="50" /></a>',
+                    '<a href="/friend/' + l.id +'">' + l.name + '</a>',
+                    l.type,
+                    l.rarity_,
+                    get_grow(l.hp, l.dev_type, max_lv(l.rarity), l.rarity),
+                    Math.round(dps),
+                    Math.round(dps * l.atk_nums),
+                    l.range]);
+            } else {
+                t.row.add([l.id,
+                    '<a href="/friend/' + l.id +'"><img src="/static/img/square/unit_square_'
+                        +l.id+'.png" height="50" width="50" /></a>',
+                    '<a href="/friend/' + l.id +'">' + l.name_ + '</a>',
+                    l.rarity_]);
+            }
+        }
+        t.draw();
+    }
+    query({});
+});
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "bootstrap_base.html" %}
+{% block body_content %}
+    <nav class="navbar navbar-default navbar-fixed-top navbar-inverse" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="/" style="margin-left: 10px;">
+                    <img alt="Brand" src="/static/img/favicon.png" height="38"width="36" />
+                    梅露可物语 Wiki
+                </a>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+    {% block header %}{% endblock %}
+    {% if g.err_msg or g.info_msg%}
+    <div class="container">
+        <div id="alert">
+            {% if g.err_msg %}
+            <div class="alert alert-heading text-danger">
+                {{ g.err_msg }}
+            </div>
+            {% endif %}
+            {% if g.info_msg %}
+            <div class="alert alert-heading text-success">
+                {{ g.info_msg }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+
+    </div>
+    
+    {% endblock %}
+
+{% block title %} Merc Storia Wiki {% endblock %}
+

@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+.lg-image {
+    width: 100%;
+}
+.title {
+    font-size: 30px;
+    vertical-align: middle;
+    height: 100px;
+    display: inline-block;
+    float: left;
+}
+.title-inner {
+    width: 100%;
+    margin-top: 50px;
+    text-align: left;
+    transform: translate(0, -50%);
+    display: inline-block;
+}
+.avatar {
+    vertical-align: middle;
+    height: 100px;
+    float: left;
+    width: 100px;
+}
+#level {
+    min-width: 50px;
+}
+
+@media (max-width: 768px) {
+    .container {
+        margin-left: 0;
+        margin-right: 0;
+        padding-right: 0;
+        padding-left: 0;
+    }
+    .title {
+        font-size: 1px;
+    }
+}
+.spacer {
+    height: 20px;
+}
+</style>
+<hr />
+<div class="col-sm-6">
+    <div class="row">
+        <div class="col-sm-12">
+            <img class="avatar" src="/static/img/square/unit_square_{{fri.id}}.png"/>
+            <span class="title"><span class="title-inner">{{fri.name}}</span></span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <table class="table table-striped">
+                <tr>
+                    <th> 国家 </th>
+                    <td> {{fri.country}} </td>
+                </tr>
+                <tr>
+                    <th> 属性 </th>
+                    <td> {{fri.type}} </td>
+                </tr>
+                <tr>
+                    <th> 成长类型 </th>
+                    <td> {{fri.dev_type}} </td>
+                </tr>
+                <tr>
+                    <th> 稀有度 </th>
+                    <td> {{"★"*fri.rarity}} </td>
+                </tr>
+                <tr>
+                    <th> 攻击类型 </th>
+                    <td> {{fri.atk_type}} </td>
+                </tr>
+                <tr>
+                    <th> 同时攻击个数 </th>
+                    <td> {{fri.atk_nums}} </td>
+                </tr>
+                <tr>
+                    <th> 属性修正 </th>
+                    <td>
+                        <span style="color:orangered;">{{correction[0]}}%</span>,
+                        <span style="color:deepskyblue;">{{correction[1]}}%</span>,
+                        <span style="color:limegreen;">{{correction[2]}}%</span>,
+                        <span style="color:gold;">{{correction[3]}}%</span>,
+                        <span style="color:darkviolet;">{{correction[4]}}%</span>
+                    </td>
+                </tr>
+
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="input-group" role="group" aria-label="...">
+                <div class="input-group-addon">等级</div>
+                <div class="input-group-btn">
+                    <button type="button" class="btn btn-default" id="minus"> - </button>
+                </div>
+                <input id="level" class="form-control" type="text" min="1" value="1"/>
+                <div class="input-group-btn">
+                    <button id="plus" type="button" class="btn btn-default"> + </button>
+                    <button id="lv1" type="button" class="btn btn-default"> 初始 </button>
+                    <button id="lvmax" type="button" class="btn btn-default"> 满级 </button>
+                    <button id="rsmax" type="button" class="btn btn-default"> 满觉 </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="row">
+        <div class="col-sm-12">
+            <table class="table table-striped">
+                <tr>
+                    <th> HP </th>
+                    <td id="hp"> {{fri.hp}} </td>
+                </tr>
+                <tr>
+                    <th> 攻击力 </th>
+                    <td id="atk"> {{fri.atk}} </td>
+                </tr>
+                <tr>
+                    <th> 攻击距离 </th>
+                    <td> {{fri.range}} </td>
+                </tr>
+                <tr>
+                    <th> 攻击间隔 </th>
+                    <td> {{fri.cd}} </td>
+                </tr>
+                <tr>
+                    <th> 韧性 </td>
+                    <td> {{fri.toughness}} </td>
+                </tr>
+                <tr>
+                    <th> 移动速度 </th>
+                    <td> {{fri.speed}} </td>
+                </tr>
+                <tr>
+                    <th> 单体DPS </th>
+                    <td id="dps">  </td>
+                </tr>
+                <tr>
+                    <th> 综合DPS </th>
+                    <td id="alldps">  </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="col-sm-6">
+    <img class="lg-image" src="/static/img/large/unit_large_{{fri.id}}.png"/>
+</div>
+
+<script src="/static/js/merc_calc.js"></script>
+<script>
+$(function(){
+$.extend({
+    min:function(a, b){return a< b?a:b; },
+    max:function(a, b){return a> b?a:b; }
+});
+    var level = $('#level');
+
+    function calc(level) {
+        //console.log('calc', level);
+        $('#hp').text(get_grow({{fri.hp}},"{{fri.dev_type}}",level,{{fri.rarity}}));
+        var atk = get_grow({{fri.atk}},"{{fri.dev_type}}",level,{{fri.rarity}});
+        $('#atk').text(atk);
+
+        $('#dps').text(Math.round(atk / {{fri.cd}}));
+        $('#alldps').text(Math.round(atk * {{fri.atk_nums}} / {{fri.cd}}));
+    }
+
+    function setLevel(target) {
+        target = $.max(target, parseInt(level.attr('min')));
+        target = $.min(target, max_rouse_lv({{fri.rarity}}));
+        level.val(target);
+        calc(target);
+    }
+    $('#plus').click(function() {
+        old = parseInt(level.val());
+        setLevel(old + 1);
+    });
+    $('#minus').click(function() {
+        old = parseInt(level.val());
+        setLevel(old - 1);
+    });
+    $('#lv1').click(function() {
+        setLevel(1);
+    });
+    $('#lvmax').click(function() {
+        setLevel(max_lv({{fri.rarity}}));
+    });
+    $('#rsmax').click(function() {
+        setLevel(max_rouse_lv({{fri.rarity}}));
+    });
+    level.change(function(e) {
+        setLevel(parseInt(level.val()));
+    });
+    
+    setLevel(1);
+});
+
+</script>
+{% endblock%}
